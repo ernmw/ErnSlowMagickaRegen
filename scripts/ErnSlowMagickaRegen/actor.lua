@@ -102,7 +102,8 @@ local function regenMagicka(data)
     lastUpdateTime = gameTime
 
     if deltaTime < 0 then
-        error("deltaTime for actor " .. self.id .. " is " .. deltaTime)
+        print("deltaTime for actor " .. self.id .. " is " .. deltaTime)
+        return
     end
 
     -- deltaTime is the time since we last ran regen.

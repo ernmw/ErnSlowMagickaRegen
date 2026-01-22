@@ -27,35 +27,35 @@ settings.initSettings()
 
 -- deltaTime tracks how long since we've last regenerated.
 local deltaTime = 0.0
-local totalPartitions = 8
-local partition = 0
+
+local pendingActors = {}
 
 local function onUpdate(dt)
-    -- Don't run the full check every frame.
     deltaTime = deltaTime + dt
-    if deltaTime < 0.5 then
-        return
+    if #pendingActors == 0 then
+        if deltaTime < 2 then
+            return
+        end
+
+        for _, actor in ipairs(world.activeActors) do
+            table.insert(pendingActors, actor)
+        end
     end
-    -- We only send events to actors 1 out of totalPartitions times.
-    -- This prevents frame drops when there are a ton of actors.
-    partition = (partition + 1) % totalPartitions
+
 
     local simTime = world.getSimulationTime()
     local gameTime = world.getGameTime()
     local simTimeScale = world.getSimulationTimeScale()
 
-    for _, actor in ipairs(world.activeActors) do
-        local myPartition = string.byte(string.sub(actor.id, -1)) % totalPartitions
-        if myPartition == partition then
-            settings.debugPrint("Sending event to " .. actor.id .. " (" .. tostring(myPartition) .. ")")
-            actor:sendEvent("regenMagicka", {
-                deltaTime = deltaTime,
-                simTime = simTime,
-                gameTime = gameTime,
-                simTimeScale = simTimeScale
-            })
-        end
-    end
+    local actor = table.remove(pendingActors)
+
+    settings.debugPrint("Sending event to " .. actor.id)
+    actor:sendEvent("regenMagicka", {
+        deltaTime = deltaTime,
+        simTime = simTime,
+        gameTime = gameTime,
+        simTimeScale = simTimeScale
+    })
 
     deltaTime = 0.0
 end
